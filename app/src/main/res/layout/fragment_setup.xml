@@ -19,9 +19,11 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilName"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,15 +41,17 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilWeight"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         app:layout_constraintStart_toStartOf="@+id/tilName"
         app:layout_constraintTop_toBottomOf="@+id/tilName">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etWeight"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Your Weight"
             android:ems="10"
