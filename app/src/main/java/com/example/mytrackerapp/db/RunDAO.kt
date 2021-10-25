@@ -15,6 +15,7 @@ import androidx.room.*
 @Dao
 interface RunDAO {
 
+    //run fragment
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRun(run: Run)
 
@@ -36,6 +37,7 @@ interface RunDAO {
     @Query("SELECT * FROM running_table ORDER BY caloriesBurned DESC")
     fun getAllRunsSortedByCaloriesBurned(): LiveData<List<Run>>
 
+    //statistics fragment
     @Query("SELECT SUM(timeMillis) FROM running_table")
     fun getTotalTimeInMillis(): LiveData<Long>
 
