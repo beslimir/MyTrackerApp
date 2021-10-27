@@ -76,5 +76,7 @@ dependencies {
     implementation "com.jakewharton.timber:timber:4.7.1"
     // MPAndroid Chart
     implementation "com.github.PhilJay:MPAndroidChart:v3.1.0"
+    // Lifecycle service
+    implementation "androidx.lifecycle:lifecycle-service:2.3.1"
 
 }

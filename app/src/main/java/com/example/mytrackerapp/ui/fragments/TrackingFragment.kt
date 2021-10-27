@@ -1,11 +1,14 @@
 package com.example.mytrackerapp.ui.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.example.mytrackerapp.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.mytrackerapp.R
 import com.example.mytrackerapp.databinding.FragmentTrackingBinding
+import com.example.mytrackerapp.services.TrackingService
 import com.example.mytrackerapp.ui.view_models.MainViewModel
 import com.google.android.gms.maps.GoogleMap
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,7 +36,17 @@ class TrackingFragment: Fragment(R.layout.fragment_tracking) {
         trackingBinding.mapView.getMapAsync{ googleMap ->
             map = googleMap
         }
+
+        trackingBinding.bToggleRun.setOnClickListener {
+            sendCommandToService(ACTION_START_OR_RESUME_SERVICE)
+        }
     }
+
+    private fun sendCommandToService(action: String) =
+        Intent(requireContext(), TrackingService::class.java).also { thisIntent ->
+            thisIntent.action = action
+            requireContext().startService(thisIntent)
+        }
 
     override fun onResume() {
         super.onResume()
