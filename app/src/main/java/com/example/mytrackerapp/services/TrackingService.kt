@@ -36,6 +36,13 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
 import timber.log.Timber
 
+/**
+ * Polylines = multiple polylines
+ * Polyline = (lat, lng)
+ * ==> Polylines = ((lat1, lng1), (lat2, lng2),... (lat_n, lng_n))
+ *
+ * **/
+
 typealias Polyline = MutableList<LatLng>
 typealias Polylines = MutableList<Polyline>
 
@@ -74,10 +81,12 @@ class TrackingService : LifecycleService() {
                         isFirstRun = false
                         Timber.d("Started service")
                     } else {
+                        startForegroundService() //temporarily
                         Timber.d("Resumed service")
                     }
                 }
                 ACTION_PAUSE_SERVICE -> {
+                    pauseService()
                     Timber.d("Paused service")
                 }
                 ACTION_STOP_SERVICE -> {
@@ -87,6 +96,10 @@ class TrackingService : LifecycleService() {
         }
 
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun pauseService() {
+        isTracking.postValue(false)
     }
 
     //missing permissions because of EasyPermissions use
