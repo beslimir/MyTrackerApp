@@ -25,6 +25,7 @@ import com.example.mytrackerapp.Constants.LOCATION_UPDATE_INTERVAL
 import com.example.mytrackerapp.Constants.NOTIFICATION_CHANNEL_ID
 import com.example.mytrackerapp.Constants.NOTIFICATION_CHANNEL_NAME
 import com.example.mytrackerapp.Constants.NOTIFICATION_ID
+import com.example.mytrackerapp.Constants.TIMER_UPDATE_INTERVAL
 import com.example.mytrackerapp.R
 import com.example.mytrackerapp.Utility
 import com.example.mytrackerapp.ui.MainActivity
@@ -34,6 +35,10 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -51,9 +56,17 @@ class TrackingService : LifecycleService() {
     var isFirstRun = true
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
+    private val timeRunInSeconds = MutableLiveData<Long>()
+    private var isTimerEnabled = false
+    private var lapTime = 0L
+    private var timeRun = 0L
+    private var timeStarted = 0L
+    private var lastSecondTimestamp = 0L
+
     companion object {
         val isTracking = MutableLiveData<Boolean>()
         val pathPoints = MutableLiveData<Polylines>()
+        val timeRunInMillis = MutableLiveData<Long>()
     }
 
     override fun onCreate() {
@@ -69,6 +82,28 @@ class TrackingService : LifecycleService() {
     private fun postInitialValues() {
         isTracking.postValue(false)
         pathPoints.postValue(mutableListOf()) //empty list, no coordinates at the beginning
+        timeRunInSeconds.postValue(0L)
+        timeRunInMillis.postValue(0L)
+    }
+
+    private fun startTimer() {
+        addEmptyPolyline()
+        isTracking.postValue(true)
+        timeStarted = System.currentTimeMillis()
+        isTimerEnabled = true
+
+        CoroutineScope(Dispatchers.Main).launch {
+            while(isTracking.value!!) {
+                lapTime = System.currentTimeMillis() - timeStarted
+                timeRunInMillis.postValue(timeRun + lapTime)
+                if (timeRunInMillis.value!! >= lastSecondTimestamp + 1000L) {
+                    timeRunInSeconds.postValue(timeRunInSeconds.value!! + 1)
+                    lastSecondTimestamp += 1000L
+                }
+                delay(TIMER_UPDATE_INTERVAL)
+            }
+            timeRun += lapTime
+        }
     }
 
     //whenever a command is sent to the service (e.g. startService() method from TrackingFragment)
@@ -81,7 +116,7 @@ class TrackingService : LifecycleService() {
                         isFirstRun = false
                         Timber.d("Started service")
                     } else {
-                        startForegroundService() //temporarily
+                        startTimer()
                         Timber.d("Resumed service")
                     }
                 }
@@ -100,6 +135,7 @@ class TrackingService : LifecycleService() {
 
     private fun pauseService() {
         isTracking.postValue(false)
+        isTimerEnabled = false
     }
 
     //missing permissions because of EasyPermissions use
@@ -153,7 +189,7 @@ class TrackingService : LifecycleService() {
     } ?: pathPoints.postValue(mutableListOf(mutableListOf()))
 
     private fun startForegroundService() {
-        addEmptyPolyline()
+        startTimer()
         isTracking.postValue(true)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
