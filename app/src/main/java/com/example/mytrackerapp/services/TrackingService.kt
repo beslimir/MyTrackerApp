@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
-import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -17,7 +15,6 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.example.mytrackerapp.Constants.ACTION_PAUSE_SERVICE
-import com.example.mytrackerapp.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import com.example.mytrackerapp.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.mytrackerapp.Constants.ACTION_STOP_SERVICE
 import com.example.mytrackerapp.Constants.FASTEST_LOCATION_INTERVAL
@@ -26,20 +23,20 @@ import com.example.mytrackerapp.Constants.NOTIFICATION_CHANNEL_ID
 import com.example.mytrackerapp.Constants.NOTIFICATION_CHANNEL_NAME
 import com.example.mytrackerapp.Constants.NOTIFICATION_ID
 import com.example.mytrackerapp.Constants.TIMER_UPDATE_INTERVAL
-import com.example.mytrackerapp.R
 import com.example.mytrackerapp.Utility
-import com.example.mytrackerapp.ui.MainActivity
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * Polylines = multiple polylines
@@ -51,10 +48,14 @@ import timber.log.Timber
 typealias Polyline = MutableList<LatLng>
 typealias Polylines = MutableList<Polyline>
 
+@AndroidEntryPoint
 class TrackingService : LifecycleService() {
 
     var isFirstRun = true
+    @Inject
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    @Inject
+    lateinit var baseNotificationBuilder: NotificationCompat.Builder
 
     private val timeRunInSeconds = MutableLiveData<Long>()
     private var isTimerEnabled = false
@@ -72,7 +73,6 @@ class TrackingService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         postInitialValues()
-        fusedLocationProviderClient = FusedLocationProviderClient(this)
 
         isTracking.observe(this, Observer {
             updateLocationTracking(it)
@@ -93,7 +93,7 @@ class TrackingService : LifecycleService() {
         isTimerEnabled = true
 
         CoroutineScope(Dispatchers.Main).launch {
-            while(isTracking.value!!) {
+            while (isTracking.value!!) {
                 lapTime = System.currentTimeMillis() - timeStarted
                 timeRunInMillis.postValue(timeRun + lapTime)
                 if (timeRunInMillis.value!! >= lastSecondTimestamp + 1000L) {
@@ -142,7 +142,7 @@ class TrackingService : LifecycleService() {
     @SuppressLint("MissingPermission")
     private fun updateLocationTracking(isTracking: Boolean) {
         if (isTracking) {
-            if(Utility.hasLocationPermissions(this)) {
+            if (Utility.hasLocationPermissions(this)) {
                 val request = LocationRequest().apply {
                     interval = LOCATION_UPDATE_INTERVAL
                     fastestInterval = FASTEST_LOCATION_INTERVAL
@@ -159,7 +159,7 @@ class TrackingService : LifecycleService() {
         }
     }
 
-    val locationCallback = object: LocationCallback() {
+    val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult?) {
             super.onLocationResult(result)
             if (isTracking.value!!) {
@@ -192,21 +192,14 @@ class TrackingService : LifecycleService() {
         startTimer()
         isTracking.postValue(true)
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel(notificationManager)
         }
 
-        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setAutoCancel(false)
-            .setOngoing(true)
-            .setSmallIcon(R.drawable.ic_directions_run_black_24dp)
-            .setContentTitle("My Tracking App")
-            .setContentText("00:00:00")
-            .setContentIntent(getMainActivityPendingIntent())
-
-        startForeground(NOTIFICATION_ID, notificationBuilder.build())
+        startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
     }
 
 //    val pendingIntentMainActivity = Intent(this, MainActivity::class.java).let { notificationIntent ->
@@ -217,15 +210,6 @@ class TrackingService : LifecycleService() {
 //            FLAG_UPDATE_CURRENT
 //        )
 //    }
-
-    private fun getMainActivityPendingIntent() = PendingIntent.getActivity(
-        this,
-        0,
-        Intent(this, MainActivity::class.java).also {
-            it.action = ACTION_SHOW_TRACKING_FRAGMENT
-        },
-        FLAG_UPDATE_CURRENT
-    )
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel(notificationManager: NotificationManager) {
