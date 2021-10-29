@@ -29,6 +29,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
+import javax.inject.Inject
 
 /**
  * We need to take care of MapView lifecycle,
@@ -49,7 +50,9 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     private var currentTimeMillis = 0L
 
     private var menu: Menu? = null
-    private var weight = 79f
+    
+    @set:Inject
+    var weight = 79f
 
     override fun onCreateView(
         inflater: LayoutInflater,

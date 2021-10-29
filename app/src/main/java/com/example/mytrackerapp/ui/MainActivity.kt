@@ -17,7 +17,7 @@ import timber.log.Timber
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var mainBinding: ActivityMainBinding
+    lateinit var mainBinding: ActivityMainBinding
     private lateinit var navHostFragment: NavHostFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
