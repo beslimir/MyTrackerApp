@@ -33,6 +33,9 @@ class MainActivity : AppCompatActivity() {
         navHostFragment = supportFragmentManager.findFragmentById(R.id.navHostFragment) as NavHostFragment
         val navController = navHostFragment.navController
         NavigationUI.setupWithNavController(mainBinding.bottomNavigationView, navController)
+        
+        //nothing will happen if we set no operation on reselected fragment:
+        mainBinding.bottomNavigationView.setOnItemReselectedListener{/* no operation*/}
 
         //handle the bottom navigation view: If not needed, hide it
         navHostFragment.findNavController().addOnDestinationChangedListener{_, destination, _ ->

@@ -10,6 +10,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.mytrackerapp.Constants.ACTION_PAUSE_SERVICE
 import com.example.mytrackerapp.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.mytrackerapp.Constants.ACTION_STOP_SERVICE
+import com.example.mytrackerapp.Constants.CANCEL_TRACKING_DIALOG_TAG
 import com.example.mytrackerapp.Constants.MAP_ZOOM
 import com.example.mytrackerapp.Constants.POLYLINE_COLOR
 import com.example.mytrackerapp.Constants.POLYLINE_WIDTH
@@ -22,10 +23,8 @@ import com.example.mytrackerapp.services.TrackingService
 import com.example.mytrackerapp.ui.view_models.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
@@ -50,7 +49,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     private var currentTimeMillis = 0L
 
     private var menu: Menu? = null
-    
+
     @set:Inject
     var weight = 79f
 
@@ -76,6 +75,15 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
         trackingBinding.bToggleRun.setOnClickListener {
             toggleRun()
+        }
+
+        if (savedInstanceState != null) {
+            val cancelTrackingDialog = parentFragmentManager
+                .findFragmentByTag(CANCEL_TRACKING_DIALOG_TAG) as CancelTrackingDialog?
+
+            cancelTrackingDialog?.setYesListener {
+                stopRun()
+            }
         }
 
         trackingBinding.bFinishRun.setOnClickListener {
@@ -119,7 +127,14 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
             var avgSpeed = (distanceInMeters / 1000f) / (currentTimeMillis / 1000f / 60 / 60) //kmh
             val dateTimestamp = Calendar.getInstance().timeInMillis
             val caloriesBurned = ((distanceInMeters / 1000f) * weight).toInt()
-            val run = Run(bitmap, dateTimestamp, avgSpeed, distanceInMeters, currentTimeMillis, caloriesBurned)
+            val run = Run(
+                bitmap,
+                dateTimestamp,
+                avgSpeed,
+                distanceInMeters,
+                currentTimeMillis,
+                caloriesBurned
+            )
 
             viewModel.insertRun(run)
 
@@ -135,7 +150,8 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     private fun addLatestPolyline() {
         if (pathPoints.isNotEmpty() && pathPoints.last().size > 1) { //ensure there are min. 2 points
-            val preLastPosition = pathPoints.last()[pathPoints.last().size - 2] //take two last points
+            val preLastPosition =
+                pathPoints.last()[pathPoints.last().size - 2] //take two last points
             val lastPosition = pathPoints.last().last()
             val polylineOptions = PolylineOptions()
                 .color(POLYLINE_COLOR)
@@ -171,10 +187,10 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     private fun updateTracking(isTracking: Boolean) {
         this.isTracking = isTracking
-        if (!isTracking) {
+        if (!isTracking && currentTimeMillis > 0L) {
             trackingBinding.bToggleRun.text = "Start"
             trackingBinding.bFinishRun.visibility = View.VISIBLE
-        } else {
+        } else if (isTracking) {
             trackingBinding.bToggleRun.text = "Stop"
             trackingBinding.bFinishRun.visibility = View.GONE
             menu?.getItem(0)?.isVisible = true
@@ -246,7 +262,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
 
-        if(currentTimeMillis > 0L) {
+        if (currentTimeMillis > 0L) {
             this.menu?.getItem(0)?.isVisible = true
         }
     }
@@ -261,21 +277,15 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     }
 
     private fun showCancelTrackingDialog() {
-        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.AlertDialogTheme)
-            .setTitle("Cancel the run?")
-            .setMessage("Are you sure you want to cancel the run and all of it's data?")
-            .setIcon(R.drawable.ic_delete)
-            .setPositiveButton("Yes") { _, _ ->
+        CancelTrackingDialog().apply {
+            setYesListener {
                 stopRun()
             }
-            .setNegativeButton("No") { dialogInterface, _ ->
-                dialogInterface.cancel()
-            }
-            .create()
-        dialog.show()
+        }.show(parentFragmentManager, CANCEL_TRACKING_DIALOG_TAG)
     }
 
     private fun stopRun() {
+        trackingBinding.tvTimer.text = "00:00:00:00"
         sendCommandToService(ACTION_STOP_SERVICE)
         findNavController().navigate(R.id.action_trackingFragment_to_runFragment)
     }
