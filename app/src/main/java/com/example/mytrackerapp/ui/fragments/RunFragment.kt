@@ -4,6 +4,7 @@ import android.Manifest
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.AdapterView
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -12,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mytrackerapp.Constants.REQUEST_CODE_LOCATION_PERMISSION
 import com.example.mytrackerapp.R
+import com.example.mytrackerapp.SortType
 import com.example.mytrackerapp.Utility
 import com.example.mytrackerapp.adapters.RunAdapter
 import com.example.mytrackerapp.databinding.FragmentRunBinding
@@ -38,7 +40,31 @@ class RunFragment : Fragment(R.layout.fragment_run), EasyPermissions.PermissionC
             findNavController().navigate(R.id.action_runFragment_to_trackingFragment)
         }
 
-        viewModel.runsSortedByDate.observe(viewLifecycleOwner, Observer {
+        runBinding.spFilter.setSelection(viewModel.sortType.ordinal)
+//        when(viewModel.sortType) {
+//            SortType.DATE -> runBinding.spFilter.setSelection(0)
+//            SortType.DISTANCE -> runBinding.spFilter.setSelection(1)
+//            SortType.CALORIES_BURNED -> runBinding.spFilter.setSelection(2)
+//            SortType.RUNNING_TIME -> runBinding.spFilter.setSelection(3)
+//            SortType.AVG_SPEED -> runBinding.spFilter.setSelection(4)
+//        }
+
+        runBinding.spFilter.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(adapterView: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+                viewModel.sortRuns(SortType.values()[pos])
+//                when(pos) {
+//                    0 -> viewModel.sortRuns(SortType.DATE)
+//                    1 -> viewModel.sortRuns(SortType.DISTANCE)
+//                    2 -> viewModel.sortRuns(SortType.CALORIES_BURNED)
+//                    3 -> viewModel.sortRuns(SortType.RUNNING_TIME)
+//                    4 -> viewModel.sortRuns(SortType.AVG_SPEED)
+//                }
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
+        }
+
+        viewModel.runs.observe(viewLifecycleOwner, Observer {
             runAdapter.submitList(it)
         })
     }

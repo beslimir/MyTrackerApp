@@ -2,10 +2,10 @@
     <string name="app_name">MyTrackerApp</string>
     <string-array name="filter_options">
         <item>Date</item>
-        <item>Running Time</item>
         <item>Distance</item>
-        <item>Average Speed</item>
         <item>Calories Burned</item>
+        <item>Running Time</item>
+        <item>Average Speed</item>
     </string-array>
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">ENTER YOUR API KEY HERE</string>
 </resources>
