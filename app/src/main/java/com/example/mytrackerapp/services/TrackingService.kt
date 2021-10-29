@@ -58,6 +58,7 @@ class TrackingService : LifecycleService() {
     @Inject lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     @Inject lateinit var baseNotificationBuilder: NotificationCompat.Builder
     lateinit var currentNotificationBuilder: NotificationCompat.Builder
+    var serviceKilled = false
 
     private val timeRunInSeconds = MutableLiveData<Long>()
     private var isTimerEnabled = false
@@ -110,6 +111,15 @@ class TrackingService : LifecycleService() {
         }
     }
 
+    private fun killService() {
+        serviceKilled = true
+        isFirstRun = true
+        pauseService()
+        postInitialValues()
+        stopForeground(true)
+        stopSelf()
+    }
+
     //whenever a command is sent to the service (e.g. startService() method from TrackingFragment)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
@@ -130,6 +140,7 @@ class TrackingService : LifecycleService() {
                 }
                 ACTION_STOP_SERVICE -> {
                     Timber.d("Stopped service")
+                    killService()
                 }
             }
         }
@@ -162,9 +173,11 @@ class TrackingService : LifecycleService() {
             isAccessible = true
             set(currentNotificationBuilder, ArrayList<NotificationCompat.Action>())
         }
-        currentNotificationBuilder = baseNotificationBuilder
-            .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
-        notificationManager.notify(NOTIFICATION_ID, currentNotificationBuilder.build())
+        if (!serviceKilled) {
+            currentNotificationBuilder = baseNotificationBuilder
+                .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
+            notificationManager.notify(NOTIFICATION_ID, currentNotificationBuilder.build())
+        }
     }
 
     //missing permissions because of EasyPermissions use
@@ -230,9 +243,11 @@ class TrackingService : LifecycleService() {
         startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
 
         timeRunInSeconds.observe(this, Observer {
-            val notification = currentNotificationBuilder
-                .setContentText(Utility.getFormattedStopWatchTime(it * 1000L))
-            notificationManager.notify(NOTIFICATION_ID, notification.build())
+            if (!serviceKilled) {
+                val notification = currentNotificationBuilder
+                    .setContentText(Utility.getFormattedStopWatchTime(it * 1000L))
+                notificationManager.notify(NOTIFICATION_ID, notification.build())
+            }
         })
     }
 
