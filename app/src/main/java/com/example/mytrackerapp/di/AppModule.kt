@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import androidx.room.Room
 import com.example.mytrackerapp.Constants.KEY_FIRST_TIME_TOGGLE
 import com.example.mytrackerapp.Constants.KEY_NAME
+import com.example.mytrackerapp.Constants.KEY_WEIGHT
 import com.example.mytrackerapp.Constants.SHARED_PREFS_NAME
 import com.example.mytrackerapp.db.RunDatabase
 import dagger.Module
@@ -47,7 +48,7 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideWeight(sharedPref: SharedPreferences) = sharedPref.getFloat(KEY_NAME, 80f)
+    fun provideWeight(sharedPref: SharedPreferences) = sharedPref.getFloat(KEY_WEIGHT, 80f)
 
     @Singleton
     @Provides

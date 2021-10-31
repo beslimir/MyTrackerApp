@@ -57,7 +57,7 @@ class SettingsFragment: Fragment(R.layout.fragment_settings) {
 
     private fun loadFieldsFromSharedPrefs() {
         val name = sharedPrefs.getString(KEY_NAME, "") ?: ""
-        val weight = sharedPrefs.getFloat(KEY_NAME, 79f)
+        val weight = sharedPrefs.getFloat(KEY_WEIGHT, 79f)
 
         settingsBinding.etName.setText(name)
         settingsBinding.etWeight.setText(weight.toString())
