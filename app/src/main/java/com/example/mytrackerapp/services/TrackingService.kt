@@ -46,6 +46,13 @@ import javax.inject.Inject
  * Polyline = (lat, lng)
  * ==> Polylines = ((lat1, lng1), (lat2, lng2),... (lat_n, lng_n))
  *
+ * LocationCallback
+ * - The locationCallback needs to be registered with the location client using the
+ * fusedLocationProviderClient using the method .requestLocationUpdates()
+ * - LocationRequest() defines how often we get our update of a location
+ * - fusedLocationProviderClient takes the locationRequest and locationCallback
+ * as parameters in order to get the update
+ *
  * **/
 
 typealias Polyline = MutableList<LatLng>
@@ -225,6 +232,7 @@ class TrackingService : LifecycleService() {
         }
     }
 
+    //adding an empty polyline after clicking start/pause
     private fun addEmptyPolyline() = pathPoints.value?.apply {
         add(mutableListOf())
         pathPoints.postValue(this)

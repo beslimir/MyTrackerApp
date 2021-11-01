@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 import java.util.*
 import javax.inject.Inject
 
@@ -34,7 +35,11 @@ import javax.inject.Inject
  * We need to take care of MapView lifecycle,
  * therefore we will override the lifecycle methods
  * of the activity in order to handle also
- * the lifecycle of the Map
+ * the lifecycle of the Map.
+ *
+ * If we want to include a MapView in the app, we need to
+ * define it in the layout and then use the getMapAsync{}
+ * method on it in order to initialize the GoogleMap variable.
  *
  * **/
 
@@ -141,7 +146,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
             Snackbar.make(
                 requireActivity().findViewById(R.id.rootView),
                 "Run saved successfully",
-                Snackbar.LENGTH_LONG
+                Snackbar.LENGTH_SHORT
             ).show()
 
             stopRun()
@@ -159,11 +164,15 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
                 .add(preLastPosition)
                 .add(lastPosition)
 
+            Timber.i("New polyline: ($preLastPosition, $lastPosition)")
+
             map?.addPolyline(polylineOptions)
         }
     }
 
+    //If we rotate the device, draw all polylines
     private fun addAllPolylines() {
+        Timber.i("All polylines: size = ${pathPoints.size}")
         for (polyline in pathPoints) {
             val polylineOptions = PolylineOptions()
                 .color(POLYLINE_COLOR)
@@ -211,6 +220,8 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
         TrackingService.pathPoints.observe(viewLifecycleOwner, Observer {
             pathPoints = it
+            Timber.i("Path point: $it")
+
             addLatestPolyline()
             moveCameraToUser()
         })
